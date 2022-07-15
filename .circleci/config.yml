@@ -47,5 +47,6 @@ workflows:
   myWorkflow:
     jobs:
       - buildProject
-      # - create_infrastructure [infrastructure created]
+      - create_infrastructure 
+      
       - configure_infrastructure
