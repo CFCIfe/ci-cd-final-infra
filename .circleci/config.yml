@@ -8,9 +8,8 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
-      - checkout # check out the code in the project directory
-      - run: echo "hello world" # run the `echo` command
-      - run: echo "${CIRCLE_WORKFLOW_ID:0:5}"
+      - checkout
+      - run: echo "hello world"
 
   create_infrastructure:
     docker:
@@ -24,10 +23,30 @@ jobs:
               --template-file template.yml \
               --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
               --region us-east-1
+  
+  configure_infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+         fingerprints:
+           - ["c3:97:08:03:9d:04:a9:ee:c2:dd:0e:0e:f0:e4:01:a8"]
+      - run:
+          name: Install Ansible
+          command: |
+            apk add --update ansible
+      - run:
+          name: Run Playbook and Configure Server
+          command: |
+            ansible-playbook -i inventory main.yml
+
+
 # Sequential workflow
 workflows:
   # Name the workflow
   myWorkflow:
     jobs:
       - buildProject
-      - create_infrastructure
+      # - create_infrastructure [infrastructure created]
+      - configure_infrastructure
