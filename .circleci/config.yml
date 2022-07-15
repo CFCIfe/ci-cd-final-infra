@@ -48,6 +48,6 @@ workflows:
     jobs:
       - buildProject
       - create_infrastructure
-          requires: buildProject
+        requires: buildProject
       - configure_infrastructure
-          requires: create_infrastructure
+         requires: create_infrastructure
