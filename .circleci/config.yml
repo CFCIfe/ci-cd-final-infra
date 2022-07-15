@@ -47,9 +47,9 @@ workflows:
   myWorkflow:
     jobs:
       - buildProject
-      - create_infrastructure:
-          requires:
-            - buildProject
+      # - create_infrastructure:
+      #     requires:
+      #       - buildProject
       - configure_infrastructure:
-          requires:
-            - create_infrastructure
+          # requires:
+          #   - create_infrastructure
