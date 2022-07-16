@@ -2,9 +2,18 @@ version: 2.1
 # Use a package of configuration called an orb.
 orbs:
   aws-cli: circleci/aws-cli@2.0.3
+
+commands:
+  destroy_environment:
+    steps:
+      - run:
+          name: Destroy Environment
+          command: |
+            aws cloudformation delete-stack \
+              --stack-name myStack-${CIRCLE_WORKFLOW_ID}
+
 jobs:
-  buildProject:  # Choose any name, such as `build`
-    # The primary container, where your job's commands will run
+  buildProject: 
     docker:
       - image: circleci/node:13.8.0
     steps:
@@ -21,24 +30,34 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file template.yml \
-              --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
+              --stack-name myStack-${CIRCLE_WORKFLOW_ID} \
               --region us-east-1
-  
+      - destroy_environment
+
   configure_infrastructure:
     docker:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
       - add_ssh_keys:
-         fingerprints: ["c3:97:08:03:9d:04:a9:ee:c2:dd:0e:0e:f0:e4:01:a8"]
+         fingerprints: ["FI:NG:ER:PR:IN:TS"]
+  smoke_test:
+    docker:
+      - image: alpine:latest
+    steps:
+      - run: apk add --update curl
       - run:
-          name: Install Ansible
+          name: smoke test
           command: |
-            apk add --update ansible
-      - run:
-          name: Run Playbook and Configure Server
-          command: |
-            ansible-playbook main.yml -i inventory
+            URL="https://blog.udacity.com/"
+            # Test if website exists
+            if curl -s --head ${URL} 
+            then
+              return 0
+            else
+              return 1
+            fi
+      - destroy_environment 
 
 # Sequential workflow
 workflows:
@@ -46,9 +65,9 @@ workflows:
   myWorkflow:
     jobs:
       - buildProject
-      # - create_infrastructure:
-      #     requires:
-      #       - buildProject
-      - configure_infrastructure
-          # requires:
-          #   - create_infrastructure
+      - create_infrastructure:
+          requires:
+            - buildProject
+      - configure_infrastructure:
+          requires:
+            - create_infrastructure
